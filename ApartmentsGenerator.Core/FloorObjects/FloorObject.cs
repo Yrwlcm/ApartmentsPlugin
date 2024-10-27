@@ -2,7 +2,6 @@
 
 namespace ApartmentsGenerator.Core.FloorObjects;
 
-//asdhasjhd
 public abstract class FloorObject
 {
     public abstract FloorObjectType FloorObjectType { get; }

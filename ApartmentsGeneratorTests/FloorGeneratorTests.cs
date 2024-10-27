@@ -1,6 +1,8 @@
 using NetTopologySuite.Geometries;
 using ApartmentsGenerator.Core;
 using FluentAssertions;
+using UnitsNet;
+using UnitsNet.Units;
 
 namespace ApartmentsGeneratorTests;
 
@@ -26,7 +28,7 @@ public class FloorGeneratorShould
         var rectanglePolygon = geometryFactory.CreatePolygon(coordinates);
         
         var floorGenerator = new FloorGenerator();
-        var floor = floorGenerator.Generate(rectanglePolygon);
+        var floor = floorGenerator.Generate(rectanglePolygon, new Length(10, LengthUnit.Meter));
         floor.Bounds.Should().Be(rectanglePolygon);
     }
 }

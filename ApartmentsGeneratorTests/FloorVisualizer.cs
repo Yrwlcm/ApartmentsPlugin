@@ -26,26 +26,60 @@ public static class FloorVisualizer
         };
         canvas.DrawRect(0, 0, canvasWidth, canvasHeight, backgroundPaint);
 
-        var paint = new SKPaint
-        {
-            Color = SKColors.Black,
-            IsStroke = true,
-            StrokeWidth = 2
-        };
-
         // Рисуем этаж и объекты с учетом смещения для центрирования
         canvas.Translate(margin - (float)bounds.MinX * scale, margin - (float)bounds.MinY * scale);
         canvas.Scale(scale, scale);
 
         // Рисуем этаж
-        DrawPolygon(floor.Bounds, canvas, paint);
+        var floorPaint = new SKPaint
+        {
+            Color = SKColors.Black,
+            IsStroke = true,
+            StrokeWidth = 1, // Потоньше, чтобы не перекрывать другие элементы
+            Style = SKPaintStyle.Stroke
+        };
+        DrawPolygon(floor.Bounds, canvas, floorPaint);
 
-        // Рисуем квартиры
+        // Рисуем объекты этажа (квартиры и коридоры)
         foreach (var floorObject in floor.FloorObjects)
         {
             if (floorObject is Apartment apartment)
             {
-                DrawPolygon(apartment.Bounds, canvas, paint);
+                var apartmentPaint = new SKPaint
+                {
+                    Color = SKColors.LightGreen,
+                    IsStroke = false,
+                    Style = SKPaintStyle.Fill
+                };
+                DrawFilledPolygon(apartment.Bounds, canvas, apartmentPaint);
+
+                var apartmentOutlinePaint = new SKPaint
+                {
+                    Color = SKColors.Black,
+                    IsStroke = true,
+                    StrokeWidth = 1,
+                    Style = SKPaintStyle.Stroke
+                };
+                DrawPolygon(apartment.Bounds, canvas, apartmentOutlinePaint);
+            }
+            else if (floorObject is Hallway hallway)
+            {
+                var hallwayPaint = new SKPaint
+                {
+                    Color = SKColors.LightBlue,
+                    IsStroke = false,
+                    Style = SKPaintStyle.Fill
+                };
+                DrawFilledPolygon(hallway.Bounds, canvas, hallwayPaint);
+
+                var hallwayOutlinePaint = new SKPaint
+                {
+                    Color = SKColors.Blue,
+                    IsStroke = true,
+                    StrokeWidth = 1,
+                    Style = SKPaintStyle.Stroke
+                };
+                DrawPolygon(hallway.Bounds, canvas, hallwayOutlinePaint);
             }
         }
 
@@ -64,5 +98,21 @@ public static class FloorVisualizer
             var end = new SKPoint((float)coordinates[i + 1].X, (float)coordinates[i + 1].Y);
             canvas.DrawLine(start, end, paint);
         }
+    }
+
+    private static void DrawFilledPolygon(Polygon polygon, SKCanvas canvas, SKPaint paint)
+    {
+        using var path = new SKPath();
+        var coordinates = polygon.Coordinates;
+        if (coordinates.Length <= 0) 
+            return;
+            
+        path.MoveTo((float)coordinates[0].X, (float)coordinates[0].Y);
+        for (var i = 1; i < coordinates.Length; i++)
+        {
+            path.LineTo((float)coordinates[i].X, (float)coordinates[i].Y);
+        }
+        path.Close();
+        canvas.DrawPath(path, paint);
     }
 }

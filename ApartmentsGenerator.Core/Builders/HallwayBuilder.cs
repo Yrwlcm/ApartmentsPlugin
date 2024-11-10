@@ -2,7 +2,7 @@
 using NetTopologySuite.Geometries;
 using UnitsNet;
 
-namespace ApartmentsGenerator.Core;
+namespace ApartmentsGenerator.Core.Builders;
 
 public static class HallwayBuilder
 {

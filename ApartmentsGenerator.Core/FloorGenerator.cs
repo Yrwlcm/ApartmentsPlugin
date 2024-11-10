@@ -7,86 +7,103 @@ namespace ApartmentsGenerator.Core
     public class FloorGenerator : IFloorGenerator
     {
         private const double HALLWAY_WIDTH_METERS = 4.5;
-        
+
         public Floor Generate(Polygon floorGeometry, Length cellWidthMeters)
         {
             var floor = new Floor(floorGeometry);
-            var hallway = GenerateHallway(floor);
+            var hallway = GenerateHallway(floorGeometry);
             floor.FloorObjects.Add(hallway);
 
-            var apartments = GenerateApartments(floor, hallway.Bounds, cellWidthMeters);
+            var apartments = GenerateApartments(floor, floorGeometry, hallway.Bounds, cellWidthMeters);
             floor.FloorObjects.AddRange(apartments);
             return floor;
         }
 
-        private static Hallway GenerateHallway(Floor floor)
+        private static Hallway GenerateHallway(Polygon floorGeometry)
         {
-            var availableArea = floor.Bounds;
-            var hallwayWidth = Length.FromMeters(HALLWAY_WIDTH_METERS);
-            var hallwayMinX = Length.FromMeters(availableArea.EnvelopeInternal.MinX);
-            var hallwayMaxX = Length.FromMeters(availableArea.EnvelopeInternal.MaxX);
-            var hallwayMinY = Length.FromMeters(availableArea.EnvelopeInternal.MinY) 
-                              + (Length.FromMeters(availableArea.EnvelopeInternal.Height) - hallwayWidth) / 2;
-            var hallwayMaxY = hallwayMinY + hallwayWidth;
-
-            var hallwayCoordinates = new[]
-            {
-                new Coordinate(hallwayMinX.Meters, hallwayMinY.Meters),
-                new Coordinate(hallwayMinX.Meters, hallwayMaxY.Meters),
-                new Coordinate(hallwayMaxX.Meters, hallwayMaxY.Meters),
-                new Coordinate(hallwayMaxX.Meters, hallwayMinY.Meters),
-                new Coordinate(hallwayMinX.Meters, hallwayMinY.Meters)
-            };
-
+            var availableArea = floorGeometry.EnvelopeInternal;
+            var hallwayCoordinates = CalculateHallwayCoordinates(availableArea);
             var hallwayPolygon = new Polygon(new LinearRing(hallwayCoordinates));
-            return new Hallway(floor, hallwayPolygon);
+            return new Hallway(new Floor(floorGeometry), hallwayPolygon);
         }
 
-        private static List<Apartment> GenerateApartments(Floor floor, Polygon hallwayGeometry, Length cellWidth)
+        private static Coordinate[] CalculateHallwayCoordinates(Envelope availableArea)
+        {
+            var hallwayWidth = Length.FromMeters(HALLWAY_WIDTH_METERS);
+            var minX = Length.FromMeters(availableArea.MinX);
+            var maxX = Length.FromMeters(availableArea.MaxX);
+            var minY = Length.FromMeters(availableArea.MinY) + 
+                       (Length.FromMeters(availableArea.Height) - hallwayWidth) / 2;
+            var maxY = minY + hallwayWidth;
+
+            return
+            [
+                new Coordinate(minX.Meters, minY.Meters),
+                new Coordinate(minX.Meters, maxY.Meters),
+                new Coordinate(maxX.Meters, maxY.Meters),
+                new Coordinate(maxX.Meters, minY.Meters),
+                new Coordinate(minX.Meters, minY.Meters)
+            ];
+        }
+
+        private static List<Apartment> GenerateApartments(Floor floor,
+            Polygon floorGeometry,
+            Polygon hallwayGeometry,
+            Length cellWidth)
         {
             var apartments = new List<Apartment>();
-            var availableArea = floor.Bounds;
-            var hallwayWidth = Length.FromMeters(hallwayGeometry.EnvelopeInternal.Height);
-            var apartmentHeight = (Length.FromMeters(availableArea.EnvelopeInternal.Height) - hallwayWidth) / 2;
+            var availableArea = floorGeometry.EnvelopeInternal;
+            var apartmentHeight = CalculateApartmentHeight(availableArea, hallwayGeometry);
 
-            var currentX = Length.FromMeters(availableArea.EnvelopeInternal.MinX);
-            var currentYBottom = Length.FromMeters(availableArea.EnvelopeInternal.MinY);
-            var currentYTop = Length.FromMeters(availableArea.EnvelopeInternal.MaxY) - apartmentHeight;
+            apartments.AddRange(GenerateApartmentRow(floor, availableArea, cellWidth, apartmentHeight, true));
+            apartments.AddRange(GenerateApartmentRow(floor, availableArea, cellWidth, apartmentHeight, false));
 
-            // Generate apartments below the hallway
-            while (currentX + cellWidth <= Length.FromMeters(availableArea.EnvelopeInternal.MaxX))
+            return apartments;
+        }
+
+        private static Length CalculateApartmentHeight(Envelope availableArea, Polygon hallwayGeometry)
+        {
+            var hallwayHeight = Length.FromMeters(hallwayGeometry.EnvelopeInternal.Height);
+            return (Length.FromMeters(availableArea.Height) - hallwayHeight) / 2;
+        }
+
+        private static IEnumerable<Apartment> GenerateApartmentRow(Floor floor,
+            Envelope availableArea,
+            Length cellWidth,
+            Length apartmentHeight,
+            bool isBottomRow)
+        {
+            var apartments = new List<Apartment>();
+            var currentX = Length.FromMeters(availableArea.MinX);
+            var startY = isBottomRow ? Length.FromMeters(availableArea.MinY) 
+                                     : Length.FromMeters(availableArea.MaxY) - apartmentHeight;
+
+            while (currentX + cellWidth <= Length.FromMeters(availableArea.MaxX))
             {
-                var bottomApartmentCoordinates = new[]
-                {
-                    new Coordinate(currentX.Meters, currentYBottom.Meters),
-                    new Coordinate(currentX.Meters, (currentYBottom + apartmentHeight).Meters),
-                    new Coordinate((currentX + cellWidth).Meters, (currentYBottom + apartmentHeight).Meters),
-                    new Coordinate((currentX + cellWidth).Meters, currentYBottom.Meters),
-                    new Coordinate(currentX.Meters, currentYBottom.Meters)
-                };
-
-                var bottomApartmentPolygon = new Polygon(new LinearRing(bottomApartmentCoordinates));
-                var bottomApartment = new Apartment(floor, bottomApartmentPolygon);
-                apartments.Add(bottomApartment);
-
-                // Generate apartments above the hallway
-                var topApartmentCoordinates = new[]
-                {
-                    new Coordinate(currentX.Meters, currentYTop.Meters),
-                    new Coordinate(currentX.Meters, (currentYTop + apartmentHeight).Meters),
-                    new Coordinate((currentX + cellWidth).Meters, (currentYTop + apartmentHeight).Meters),
-                    new Coordinate((currentX + cellWidth).Meters, currentYTop.Meters),
-                    new Coordinate(currentX.Meters, currentYTop.Meters)
-                };
-
-                var topApartmentPolygon = new Polygon(new LinearRing(topApartmentCoordinates));
-                var topApartment = new Apartment(floor, topApartmentPolygon);
-                apartments.Add(topApartment);
-
+                apartments.Add(GenerateApartment(floor, currentX, startY, cellWidth, apartmentHeight));
                 currentX += cellWidth;
             }
 
             return apartments;
+        }
+
+        private static Apartment GenerateApartment(Floor floor,
+            Length startX,
+            Length startY,
+            Length width,
+            Length height)
+        {
+            var coordinates = new[]
+            {
+                new Coordinate(startX.Meters, startY.Meters),
+                new Coordinate(startX.Meters, (startY + height).Meters),
+                new Coordinate((startX + width).Meters, (startY + height).Meters),
+                new Coordinate((startX + width).Meters, startY.Meters),
+                new Coordinate(startX.Meters, startY.Meters)
+            };
+
+            var apartmentPolygon = new Polygon(new LinearRing(coordinates));
+            return new Apartment(floor, apartmentPolygon);
         }
     }
 }

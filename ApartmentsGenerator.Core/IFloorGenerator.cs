@@ -6,5 +6,5 @@ namespace ApartmentsGenerator.Core;
 
 public interface IFloorGenerator
 {
-    public Floor Generate(Polygon floorGeometry, Length cellWidthMeters);
+    public Floor Generate(Polygon floorGeometry, Length cellWidthMeters, bool placeShaftOnTop = true);
 }

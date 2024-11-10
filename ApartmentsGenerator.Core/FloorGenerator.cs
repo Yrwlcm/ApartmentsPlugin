@@ -1,4 +1,5 @@
 ﻿using ApartmentsGenerator.Core;
+using ApartmentsGenerator.Core.Builders;
 using ApartmentsGenerator.Core.FloorObjects;
 using NetTopologySuite.Geometries;
 using UnitsNet;

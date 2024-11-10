@@ -12,4 +12,9 @@ public class Floor : FloorObject
     {
         Bounds = floorPolygon;
     }
+    
+    public override void Accept(IFloorObjectVisitor visitor)
+    {
+        visitor.Visit(this);
+    }
 }

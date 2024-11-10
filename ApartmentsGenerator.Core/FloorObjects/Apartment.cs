@@ -12,4 +12,9 @@ public class Apartment : FloorObject
         Floor = floor;
         Bounds = bounds;
     }
+    
+    public override void Accept(IFloorObjectVisitor visitor)
+    {
+        visitor.Visit(this);
+    }
 }

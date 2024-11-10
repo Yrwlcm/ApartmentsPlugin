@@ -1,7 +1,7 @@
 ﻿using ApartmentsGenerator.Core.FloorObjects;
 using NetTopologySuite.Geometries;
 
-namespace ApartmentsGenerator.Core;
+namespace ApartmentsGenerator.Core.Builders;
 
 public static class ApartmentBuilder
 {

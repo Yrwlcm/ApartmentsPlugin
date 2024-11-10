@@ -77,25 +77,4 @@ public class FloorObjectDrawer(SKCanvas canvas) : IFloorObjectVisitor
         };
         PolygonDrawer.DrawPolygon(elevatorShaft.Bounds, canvas, outlinePaint);
     }
-
-    public void Visit(FloorObject floorObject)
-    {
-        // Общий метод для FloorObject, если объект не является Apartment, Hallway или ElevatorShaft
-        var fillPaint = new SKPaint
-        {
-            Color = SKColors.Crimson,
-            IsStroke = false,
-            Style = SKPaintStyle.Fill
-        };
-        PolygonDrawer.DrawFilledPolygon(floorObject.Bounds, canvas, fillPaint);
-
-        var outlinePaint = new SKPaint
-        {
-            Color = SKColors.Black,
-            IsStroke = true,
-            StrokeWidth = 1,
-            Style = SKPaintStyle.Stroke
-        };
-        PolygonDrawer.DrawPolygon(floorObject.Bounds, canvas, outlinePaint);
-    }
 }

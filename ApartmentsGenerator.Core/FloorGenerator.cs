@@ -6,8 +6,8 @@ using UnitsNet;
 
 public class FloorGenerator : IFloorGenerator
 {
-    private const double HALLWAY_WIDTH_METERS = 4.5;
-    private const double ELEVATOR_SHAFT_WIDTH_METERS = 6.6;
+    private const float HALLWAY_WIDTH_METERS = 4.5f;
+    private const float ELEVATOR_SHAFT_WIDTH_METERS = 6.6f;
     private const int MODULES_PER_APARTMENT = 3;
 
     public Floor Generate(Polygon floorGeometry, Length cellWidthMeters, bool placeShaftOnTop = true)

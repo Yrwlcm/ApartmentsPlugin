@@ -9,7 +9,7 @@ public static class ElevatorShaftBuilder
         List<Polygon> topModules,
         List<Polygon> bottomModules,
         bool placeShaftOnTop,
-        double shaftWidthMeters)
+        float shaftWidthMeters)
     {
         var selectedModules = placeShaftOnTop ? topModules : bottomModules;
         var shaftModules = GetCentralModulesForShaft(selectedModules, shaftWidthMeters);
@@ -20,7 +20,7 @@ public static class ElevatorShaftBuilder
         return new ElevatorShaft(floor, shaftPolygon);
     }
 
-    private static List<Polygon> GetCentralModulesForShaft(List<Polygon> modules, double shaftWidthMeters)
+    private static List<Polygon> GetCentralModulesForShaft(List<Polygon> modules, float shaftWidthMeters)
     {
         var modulesNeeded = (int)Math.Ceiling(shaftWidthMeters / modules.First().EnvelopeInternal.Width);
         var startIndex = (modules.Count - modulesNeeded) / 2;

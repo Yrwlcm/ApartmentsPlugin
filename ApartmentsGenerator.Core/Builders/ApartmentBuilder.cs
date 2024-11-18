@@ -5,6 +5,8 @@ namespace ApartmentsGenerator.Core.Builders;
 
 public static class ApartmentBuilder
 {
+    private const float DISTANCE_TOLERANCE_METERS = 0.01f;
+    
     public static List<Apartment> GenerateApartmentsFromModules(Floor floor,
         List<Polygon> bottomModules,
         List<Polygon> topModules,
@@ -23,20 +25,31 @@ public static class ApartmentBuilder
         int modulesPerApartment)
     {
         var apartments = new List<Apartment>();
-
-        while (modules.Count >= modulesPerApartment)
+        
+        while (modules.Count > 0)
         {
-            var apartmentModules = modules.Take(modulesPerApartment).ToList();
-            var apartmentPolygon = GeometryHelper.CombinePolygons(apartmentModules);
+            var modulesToCombine = new List<Polygon>();
+            
+            while (modulesToCombine.Count < modulesPerApartment && modules.Count > 0)
+            {
+                var previousModule = modulesToCombine.LastOrDefault();
+                var nextModule = modules.FirstOrDefault();
+                
+                if (nextModule is null)
+                    break;
+
+                if (previousModule is null || nextModule.Distance(previousModule) < DISTANCE_TOLERANCE_METERS)
+                {
+                    modulesToCombine.Add(nextModule);
+                    modules.RemoveAt(0);
+                }
+                else
+                    break;
+            }
+            
+            var apartmentPolygon = GeometryHelper.CombinePolygons(modulesToCombine);
             apartments.Add(new Apartment(floor, apartmentPolygon));
-            modules.RemoveRange(0, modulesPerApartment);
         }
-
-        if (modules.Count == 0)
-            return apartments;
-
-        var remainingPolygon = GeometryHelper.CombinePolygons(modules);
-        apartments.Add(new Apartment(floor, remainingPolygon));
 
         return apartments;
     }

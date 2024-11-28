@@ -11,9 +11,9 @@ public class FloorApprovalTests
     [Test]
     public async Task GenerateAndVerifyFloorVisualization()
     {
-        const int FLOOR_WIDTH_METERS = 200;
-        const int FLOOR_HEIGHT_METERS = 100;
-        const int SEGMENT_WIDTH_METERS = 10;
+        const int FLOOR_WIDTH_METERS = 100;
+        const int FLOOR_HEIGHT_METERS = 50;
+        const double SEGMENT_WIDTH_METERS = 3.3;
         
         var geometryFactory = new GeometryFactory();
         var coordinates = new[]

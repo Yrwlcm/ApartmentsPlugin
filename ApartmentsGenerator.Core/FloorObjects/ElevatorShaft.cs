@@ -2,12 +2,13 @@
 
 namespace ApartmentsGenerator.Core.FloorObjects;
 
-public class Hallway: FloorObject
+public class ElevatorShaft: FloorObject
 {
-    public override FloorObjectType FloorObjectType => FloorObjectType.Hallway;
+    public override FloorObjectType FloorObjectType => FloorObjectType.ElevatorShaft;
+
     public Floor Floor { get; set; }
 
-    public Hallway(Floor floor, Polygon bounds)
+    public ElevatorShaft(Floor floor, Polygon bounds)
     {
         Floor = floor;
         Bounds = bounds;

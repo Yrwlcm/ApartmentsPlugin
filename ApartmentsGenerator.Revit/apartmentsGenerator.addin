@@ -1,0 +1,12 @@
+﻿<?xml version="1.0" encoding="utf-8" standalone="no"?>
+<RevitAddIns>
+    <AddIn Type="Command">
+        <Name>ApartmentsGenerator</Name>
+        <Assembly>ApartmentsGenerator.Revit.dll</Assembly>
+        <FullClassName>ApartmentsGenerator.Revit.Startup</FullClassName>
+        <AddInId>0A4BAF37-6355-4098-90D6-F2AE590E69FA</AddInId>
+        <VendorId>luvairo</VendorId>
+        <VendorDescription>https://github.com/luvairo-m</VendorDescription>
+		<Text>ApartmentsGenerator</Text>
+    </AddIn>
+</RevitAddIns>

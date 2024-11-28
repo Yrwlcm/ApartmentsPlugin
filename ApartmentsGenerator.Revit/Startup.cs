@@ -2,13 +2,14 @@
 using Autodesk.Revit.DB;
 using Autodesk.Revit.UI;
 
-namespace ApartmentsGenerator.Revit;
-
-[Transaction(TransactionMode.Manual)]
-public class Startup : IExternalCommand
+namespace ApartmentsGenerator.Revit
 {
-    public Result Execute(ExternalCommandData commandData, ref string message, ElementSet elements)
+    [Transaction(TransactionMode.Manual)]
+    public class Startup : IExternalCommand
     {
-        throw new NotImplementedException();
+        public Result Execute(ExternalCommandData commandData, ref string message, ElementSet elements)
+        {
+            return Result.Succeeded;
+        }
     }
 }

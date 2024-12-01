@@ -1,8 +1,9 @@
-﻿using ApartmentsGenerator.Core;
-using ApartmentsGenerator.Core.Builders;
+﻿using ApartmentsGenerator.Core.Builders;
 using ApartmentsGenerator.Core.FloorObjects;
 using NetTopologySuite.Geometries;
 using UnitsNet;
+
+namespace ApartmentsGenerator.Core;
 
 public class FloorGenerator : IFloorGenerator
 {
@@ -13,21 +14,17 @@ public class FloorGenerator : IFloorGenerator
     public Floor Generate(Polygon floorGeometry, Length cellWidthMeters, bool placeShaftOnTop = true)
     {
         var floor = new Floor(floorGeometry);
-
-        // Генерация коридора
+        
         var hallway = HallwayBuilder.GenerateHallway(floorGeometry, HALLWAY_WIDTH_METERS);
         GeometryHelper.AddFloorObjectWithCollisionCheck(floor, hallway);
-
-        // Генерация модулей
+        
         var (topModules, bottomModules) =
             ModuleGenerator.GenerateModules(floorGeometry, HALLWAY_WIDTH_METERS, cellWidthMeters);
-
-        // Сборка лифтовой шахты
+        
         var elevatorShaft = ElevatorShaftBuilder.AssembleElevatorShaft(floor, topModules, bottomModules,
             placeShaftOnTop, ELEVATOR_SHAFT_WIDTH_METERS);
         GeometryHelper.AddFloorObjectWithCollisionCheck(floor, elevatorShaft);
-
-        // Создание квартир
+        
         var apartments =
             ApartmentBuilder.GenerateApartmentsFromModules(floor, bottomModules, topModules, MODULES_PER_APARTMENT);
         floor.FloorObjects.AddRange(apartments);
@@ -46,16 +43,13 @@ public class FloorGenerator : IFloorGenerator
         var optimalWidth = CalculateModuleWidthBasedOnAreas(floorGeometry, 3.3, apartmentTypes, HALLWAY_WIDTH_METERS);
 
         var floor = new Floor(floorGeometry);
-
-        // Генерация коридора
+        
         var hallway = HallwayBuilder.GenerateHallway(floorGeometry, HALLWAY_WIDTH_METERS);
         GeometryHelper.AddFloorObjectWithCollisionCheck(floor, hallway);
-
-        // Генерация модулей
+        
         var (topModules, bottomModules) =
             ModuleGenerator.GenerateModules(floorGeometry, HALLWAY_WIDTH_METERS, optimalWidth);
-
-        // Сборка лифтовой шахты
+        
         var elevatorShaft = ElevatorShaftBuilder.AssembleElevatorShaft(floor, topModules, bottomModules,
             placeShaftOnTop, ELEVATOR_SHAFT_WIDTH_METERS);
         GeometryHelper.AddFloorObjectWithCollisionCheck(floor, elevatorShaft);
@@ -74,24 +68,28 @@ public class FloorGenerator : IFloorGenerator
         var buildingHeight = floorGeometry.EnvelopeInternal.Height;
 
         var moduleLength = (buildingHeight - hallwayWidthMeters) / 2;
-
-        // Вычисление минимальной площади однокомнатной квартиры
+        
         var minAreaPerRoom = apartmentTypes
             .Where(at => at.Rooms == 1)
             .Select(at => at.MinArea)
             .DefaultIfEmpty(apartmentTypes.Min(at => at.MinArea / at.Rooms))
             .Min();
+        
+        var maxModuleWidth = apartmentTypes
+            .Where(at => at.Rooms == 1)
+            .Select(at => at.MaxArea / moduleLength)
+            .DefaultIfEmpty(buildingWidth)
+            .Min();
+        
+        var upperLimitWidth = Math.Min(maxModuleWidth, buildingWidth);
 
-        // Подбор минимальной ширины модуля
+        Length? maxValidWidth = null;
+        
         for (var width = Math.Max(minModuleWidthMeters, minAreaPerRoom / moduleLength);
-             width <= buildingWidth;
+             width <= upperLimitWidth;
              width += 0.1)
         {
             var moduleArea = moduleLength * width;
-
-            // Проверяем, можно ли достичь минимальной площади однокомнатной квартиры
-            if (moduleArea < minAreaPerRoom)
-                continue;
 
             // Проверяем, можно ли достичь диапазонов площадей для всех квартир
             var isValid = apartmentTypes.All(at =>
@@ -102,8 +100,11 @@ public class FloorGenerator : IFloorGenerator
             });
 
             if (isValid)
-                return Length.FromMeters(width);
+                maxValidWidth = Length.FromMeters(width);
         }
+
+        if (maxValidWidth.HasValue)
+            return maxValidWidth.Value;
 
         throw new InvalidOperationException(
             "Не удалось подобрать ширину модуля, удовлетворяющую всем диапазонам площадей.");

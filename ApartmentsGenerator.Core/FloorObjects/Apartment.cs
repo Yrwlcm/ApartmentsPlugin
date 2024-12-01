@@ -6,7 +6,7 @@ public class Apartment : FloorObject
 {
     public override FloorObjectType FloorObjectType => FloorObjectType.Apartment;
     public Floor Floor { get; set; }
-    public string Name { get; set; } // Новое свойство для имени
+    public string Name { get; set; }
 
     public Apartment(Floor floor, Polygon bounds, string name)
     {

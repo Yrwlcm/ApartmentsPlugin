@@ -8,136 +8,122 @@ public static class ApartmentBuilder
     private const float DISTANCE_TOLERANCE_METERS = 0.01f;
 
     public static List<Apartment> GenerateApartmentsFromModules(Floor floor,
-        List<Polygon> bottomModules,
-        List<Polygon> topModules,
-        int modulesPerApartment)
+        List<Polygon> bottomModules, List<Polygon> topModules, int modulesPerApartment)
     {
         var apartments = new List<Apartment>();
 
-        apartments.AddRange(CreateApartmentsFromModules(floor, bottomModules, modulesPerApartment));
-        apartments.AddRange(CreateApartmentsFromModules(floor, topModules, modulesPerApartment));
+        apartments.AddRange(GenerateApartmentsFromRow(floor, bottomModules, modulesPerApartment));
+        apartments.AddRange(GenerateApartmentsFromRow(floor, topModules, modulesPerApartment));
 
         return apartments;
     }
-
-    private static List<Apartment> CreateApartmentsFromModules(Floor floor,
-        List<Polygon> modules,
-        int modulesPerApartment)
-    {
-        var apartments = new List<Apartment>();
-
-        while (modules.Count > 0)
-        {
-            var modulesToCombine = new List<Polygon>();
-
-            while (modulesToCombine.Count < modulesPerApartment && modules.Count > 0)
-            {
-                var previousModule = modulesToCombine.LastOrDefault();
-                var nextModule = modules.FirstOrDefault();
-
-                if (nextModule is null)
-                    break;
-
-                if (previousModule is null || nextModule.Distance(previousModule) < DISTANCE_TOLERANCE_METERS)
-                {
-                    modulesToCombine.Add(nextModule);
-                    modules.RemoveAt(0);
-                }
-                else
-                    break;
-            }
-
-            var apartmentPolygon = GeometryHelper.CombinePolygons(modulesToCombine);
-            apartments.Add(new Apartment(floor, apartmentPolygon, ""));
-        }
-
-        return apartments;
-    }
-
+    
     public static List<Apartment> GenerateApartmentsByArea(Floor floor,
         List<Polygon> topModules, List<Polygon> bottomModules, List<ApartmentType> apartmentTypes)
     {
         var totalArea = topModules.Concat(bottomModules).Sum(m => m.Area);
         var apartments = new List<Apartment>();
+        var usedModules = new HashSet<Polygon>();
 
         foreach (var apartmentType in apartmentTypes)
         {
             var targetArea = apartmentType.Percentage / 100 * totalArea;
             var currentArea = 0.0;
 
-            var currentRow = topModules.Count > 0 ? topModules : bottomModules;
-
-            while (currentArea < targetArea)
+            foreach (var batch in GenerateModuleBatches(topModules.Concat(bottomModules), usedModules, apartmentType))
             {
-                if (currentRow.Count == 0)
-                {
-                    // Если текущий ряд пуст, переключаемся на другой
-                    currentRow = currentRow == topModules ? bottomModules : topModules;
+                var apartmentPolygon = GeometryHelper.CombinePolygons(batch);
+                apartments.Add(new Apartment(floor, apartmentPolygon, apartmentType.Name));
+                currentArea += apartmentPolygon.Area;
 
-                    // Если другой ряд тоже пуст, завершаем цикл
-                    if (currentRow.Count == 0)
-                        break;
-                }
-
-                var modulesToCombine = new List<Polygon>();
-                var combinedArea = 0.0;
-                var apartmentCreated = false;
-
-                for (var i = 0; i < currentRow.Count; i++)
-                {
-                    var module = currentRow[i];
-                    
-                    if (modulesToCombine.Count != 0)
-                    {
-                        var lastModule = modulesToCombine.Last();
-                        if (!ModulesAreAdjacent(lastModule, module))
-                        {
-                            modulesToCombine.Clear();
-                            combinedArea = 0.0;
-                            continue;
-                        }
-                    }
-                    modulesToCombine.Add(module);
-                    combinedArea += module.Area;
-
-                    // Если квартира сформирована в пределах площади
-                    if (combinedArea >= apartmentType.MinArea && combinedArea <= apartmentType.MaxArea)
-                    {
-                        var apartmentPolygon = GeometryHelper.CombinePolygons(modulesToCombine);
-                        apartments.Add(new Apartment(floor, apartmentPolygon, apartmentType.Name));
-                        currentArea += combinedArea;
-                        modulesToCombine.ForEach(m => currentRow.Remove(m));
-
-                        apartmentCreated = true;
-                        break;
-                    }
-                }
-
-                // Если не удалось создать квартиру
-                if (!apartmentCreated)
-                {
-                    // Переходим на другой ряд, если невозможно продолжить в текущем
-                    if (currentRow == topModules && bottomModules.Count >= apartmentType.Rooms)
-                    {
-                        currentRow = bottomModules;
-                        continue;
-                    }
-
+                if (currentArea >= targetArea)
                     break;
-                }
             }
         }
 
         return apartments;
     }
-    
+
+    private static List<Apartment> GenerateApartmentsFromRow(Floor floor, List<Polygon> modules, int modulesPerApartment)
+    {
+        var apartments = new List<Apartment>();
+
+        for (var i = 0; i < modules.Count;)
+        {
+            var batch = TryGetAdjacentModules(modules, i, modulesPerApartment, out var nextIndex);
+
+            if (batch.Count <= modulesPerApartment && batch.Count > 0)
+            {
+                var apartmentPolygon = GeometryHelper.CombinePolygons(batch);
+                apartments.Add(new Apartment(floor, apartmentPolygon, ""));
+            }
+
+            i = nextIndex;
+        }
+
+        return apartments;
+    }
+
+    private static List<Polygon> TryGetAdjacentModules(List<Polygon> modules, int startIndex, int count, out int nextIndex)
+    {
+        var batch = new List<Polygon>();
+        nextIndex = startIndex;
+
+        for (var i = startIndex; i < modules.Count && batch.Count < count; i++)
+        {
+            if (batch.Count == 0 || ModulesAreAdjacent(batch.Last(), modules[i]))
+            {
+                batch.Add(modules[i]);
+                nextIndex = i + 1;
+            }
+            else
+            {
+                break;
+            }
+        }
+
+        return batch;
+    }
+
+    private static IEnumerable<List<Polygon>> GenerateModuleBatches(IEnumerable<Polygon> modules,
+        HashSet<Polygon> usedModules, ApartmentType apartmentType)
+    {
+        var batch = new List<Polygon>();
+        var batchArea = 0.0;
+
+        foreach (var module in modules)
+        {
+            if (usedModules.Contains(module))
+                continue;
+
+            if (batch.Count != 0 && !ModulesAreAdjacent(batch.Last(), module))
+            {
+                batch.Clear();
+                batchArea = 0.0;
+            }
+
+            batch.Add(module);
+            batchArea += module.Area;
+
+            if (batchArea >= apartmentType.MinArea && batchArea <= apartmentType.MaxArea)
+            {
+                foreach (var usedModule in batch)
+                    usedModules.Add(usedModule);
+
+                yield return [..batch];
+                batch.Clear();
+                batchArea = 0.0;
+            }
+        }
+    }
+
     private static bool ModulesAreAdjacent(Polygon module1, Polygon module2)
     {
         var envelope1 = module1.EnvelopeInternal;
         var envelope2 = module2.EnvelopeInternal;
 
-        // Проверяем, что модули соприкасаются по горизонтали и находятся на 1 вертикали
-        return Math.Abs(envelope1.MaxX - envelope2.MinX) < 0.01 || Math.Abs(envelope1.MinX - envelope2.MaxX) < 0.01 &&
-            Math.Abs(envelope1.MaxY - envelope2.MaxY) < 0.01;
+        return Math.Abs(envelope1.MaxX - envelope2.MinX) < DISTANCE_TOLERANCE_METERS ||
+               Math.Abs(envelope1.MinX - envelope2.MaxX) < DISTANCE_TOLERANCE_METERS &&
+               Math.Abs(envelope1.MaxY - envelope2.MaxY) < DISTANCE_TOLERANCE_METERS;
     }
 }

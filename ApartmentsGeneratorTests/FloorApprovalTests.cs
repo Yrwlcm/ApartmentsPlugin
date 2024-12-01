@@ -1,4 +1,5 @@
 ﻿using ApartmentsGenerator.Core;
+using ApartmentsGenerator.Core.FloorObjects;
 using NetTopologySuite.Geometries;
 using UnitsNet;
 using UnitsNet.Units;
@@ -39,15 +40,15 @@ public class FloorApprovalTests
     [Test]
     public async Task GenerateAndVerifyFloorVisualization_WithPercentageGeneration()
     {
-        const int FLOOR_WIDTH_METERS = 100; // Ширина здания
-        const int FLOOR_HEIGHT_METERS = 50; // Высота здания
+        const int FLOOR_WIDTH_METERS = 100;
+        const int FLOOR_HEIGHT_METERS = 50;
 
-        // Определение типов квартир с учётом минимальной площади модуля
+        // Определение типов квартир
         var apartmentTypes = new List<ApartmentType>
         {
-            new("Люкс", 3, 152, 301, 20),    // Люкс: 3 комнаты, 150–300 м², 20% площади
-            new("Комфорт", 2, 102, 151, 50), // Комфорт: 2 комнаты, 100–150 м², 50% площади
-            new("Эконом", 1, 50, 101, 30)   // Эконом: 1 комната, 50–100 м², 30% площади
+            new("Люкс", rooms: 3, minArea: 152, maxArea: 301, percentage: 20),
+            new("Комфорт", rooms: 2, minArea: 102, maxArea: 151, percentage: 50),
+            new("Эконом", rooms: 1, minArea: 50, maxArea: 101, percentage: 30)
         };
 
         var geometryFactory = new GeometryFactory();
@@ -64,12 +65,31 @@ public class FloorApprovalTests
         var floorGenerator = new FloorGenerator();
         var floor = floorGenerator.Generate(polygon, apartmentTypes);
 
+        // Вычисляем общую площадь этажа
+        var totalFloorArea = floor.Bounds.Area;
+
+        // Подсчитываем данные о сгенерированных квартирах
+        foreach (var apartmentType in apartmentTypes)
+        {
+            var apartments = floor.FloorObjects
+                .OfType<Apartment>()
+                .Where(a => a.Name == apartmentType.Name)
+                .ToList();
+
+            var totalApartmentArea = apartments.Sum(a => a.Bounds.Area);
+            var actualPercentage = (totalApartmentArea / totalFloorArea) * 100;
+
+            Console.WriteLine($"Тип квартир: {apartmentType.Name}");
+            Console.WriteLine($"  Количество квартир: {apartments.Count}");
+            Console.WriteLine($"  Занятая площадь: {totalApartmentArea:F2} м²");
+            Console.WriteLine($"  Фактический процент площади: {actualPercentage:F2}%");
+        }
+
+        // Генерация визуализации
         var outputPath = Path.Combine(TestContext.CurrentContext.WorkDirectory,
             "FloorVisualization_NamedApartments.png");
         FloorVisualizer.GenerateFloorVisualization(floor, outputPath);
 
         await VerifyFile(outputPath);
     }
-
-
 }

@@ -37,5 +37,11 @@
         <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
         <DependentUpon>FloorGeneratorTests.cs</DependentUpon>
       </None>
+      <None Update="GenerateAndVerifyFloorVisualization_WithPercentageApartments_100x50.verified.png">
+        <DependentUpon>FloorApprovalTests.cs</DependentUpon>
+      </None>
+      <None Update="GenerateAndVerifyFloorVisualization_WithPercentageApartments_110x50.verified.png">
+        <DependentUpon>FloorApprovalTests.cs</DependentUpon>
+      </None>
     </ItemGroup>
 </Project>

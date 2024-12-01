@@ -14,7 +14,7 @@ public class FloorApprovalTests
         const int FLOOR_WIDTH_METERS = 100;
         const int FLOOR_HEIGHT_METERS = 50;
         const double SEGMENT_WIDTH_METERS = 3.3;
-        
+
         var geometryFactory = new GeometryFactory();
         var coordinates = new[]
         {
@@ -25,14 +25,51 @@ public class FloorApprovalTests
             new Coordinate(0, 0)
         };
         var segmentLength = new Length(SEGMENT_WIDTH_METERS, LengthUnit.Meter);
-        
+
         var polygon = geometryFactory.CreatePolygon(coordinates);
         var floorGenerator = new FloorGenerator();
         var floor = floorGenerator.Generate(polygon, segmentLength);
 
         var outputPath = Path.Combine(TestContext.CurrentContext.WorkDirectory, "FloorVisualization.png");
         FloorVisualizer.GenerateFloorVisualization(floor, outputPath);
-        
+
         await VerifyFile(outputPath);
     }
+
+    [Test]
+    public async Task GenerateAndVerifyFloorVisualization_WithPercentageGeneration()
+    {
+        const int FLOOR_WIDTH_METERS = 100; // Ширина здания
+        const int FLOOR_HEIGHT_METERS = 50; // Высота здания
+
+        // Определение типов квартир с учётом минимальной площади модуля
+        var apartmentTypes = new List<ApartmentType>
+        {
+            new("Люкс", 3, 152, 301, 20),    // Люкс: 3 комнаты, 150–300 м², 20% площади
+            new("Комфорт", 2, 102, 151, 50), // Комфорт: 2 комнаты, 100–150 м², 50% площади
+            new("Эконом", 1, 50, 101, 30)   // Эконом: 1 комната, 50–100 м², 30% площади
+        };
+
+        var geometryFactory = new GeometryFactory();
+        var coordinates = new[]
+        {
+            new Coordinate(0, 0),
+            new Coordinate(0, FLOOR_HEIGHT_METERS),
+            new Coordinate(FLOOR_WIDTH_METERS, FLOOR_HEIGHT_METERS),
+            new Coordinate(FLOOR_WIDTH_METERS, 0),
+            new Coordinate(0, 0)
+        };
+
+        var polygon = geometryFactory.CreatePolygon(coordinates);
+        var floorGenerator = new FloorGenerator();
+        var floor = floorGenerator.Generate(polygon, apartmentTypes);
+
+        var outputPath = Path.Combine(TestContext.CurrentContext.WorkDirectory,
+            "FloorVisualization_NamedApartments.png");
+        FloorVisualizer.GenerateFloorVisualization(floor, outputPath);
+
+        await VerifyFile(outputPath);
+    }
+
+
 }

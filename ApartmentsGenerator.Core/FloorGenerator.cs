@@ -60,15 +60,13 @@ public class FloorGenerator : IFloorGenerator
             placeShaftOnTop, ELEVATOR_SHAFT_WIDTH_METERS);
         GeometryHelper.AddFloorObjectWithCollisionCheck(floor, elevatorShaft);
 
-        // Создание квартир
-        var availableModules = topModules.Concat(bottomModules).ToList();
-        var apartments = ApartmentBuilder.GenerateApartmentsByArea(floor, availableModules, apartmentTypes);
+        var apartments = ApartmentBuilder.GenerateApartmentsByArea(floor, topModules, bottomModules, apartmentTypes);
         floor.FloorObjects.AddRange(apartments);
 
         return floor;
     }
 
-    
+
     public static Length CalculateModuleWidthBasedOnAreas(Polygon floorGeometry, double minModuleWidthMeters,
         List<ApartmentType> apartmentTypes, double hallwayWidthMeters)
     {
@@ -85,7 +83,9 @@ public class FloorGenerator : IFloorGenerator
             .Min();
 
         // Подбор минимальной ширины модуля
-        for (double width = minModuleWidthMeters; width <= buildingWidth; width += 0.1)
+        for (var width = Math.Max(minModuleWidthMeters, minAreaPerRoom / moduleLength);
+             width <= buildingWidth;
+             width += 0.1)
         {
             var moduleArea = moduleLength * width;
 
@@ -105,7 +105,7 @@ public class FloorGenerator : IFloorGenerator
                 return Length.FromMeters(width);
         }
 
-        throw new InvalidOperationException("Не удалось подобрать ширину модуля, удовлетворяющую всем диапазонам площадей.");
+        throw new InvalidOperationException(
+            "Не удалось подобрать ширину модуля, удовлетворяющую всем диапазонам площадей.");
     }
-
 }

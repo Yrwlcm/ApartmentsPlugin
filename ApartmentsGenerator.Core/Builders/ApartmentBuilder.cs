@@ -55,55 +55,89 @@ public static class ApartmentBuilder
     }
 
     public static List<Apartment> GenerateApartmentsByArea(Floor floor,
-        List<Polygon> availableModules, List<ApartmentType> apartmentTypes)
+        List<Polygon> topModules, List<Polygon> bottomModules, List<ApartmentType> apartmentTypes)
     {
+        var totalArea = topModules.Concat(bottomModules).Sum(m => m.Area);
         var apartments = new List<Apartment>();
-
-        // Разделяем модули на верхние и нижние
-        var topModules = availableModules.Where(m => m.Centroid.Y > floor.Bounds.Centroid.Y).ToList();
-        var bottomModules = availableModules.Where(m => m.Centroid.Y <= floor.Bounds.Centroid.Y).ToList();
 
         foreach (var apartmentType in apartmentTypes)
         {
-            var targetArea = apartmentType.Percentage / 100 * availableModules.Sum(m => m.Area);
+            var targetArea = apartmentType.Percentage / 100 * totalArea;
             var currentArea = 0.0;
 
-            while (currentArea < targetArea && (topModules.Count != 0 || bottomModules.Count != 0))
+            var currentRow = topModules.Count > 0 ? topModules : bottomModules;
+
+            while (currentArea < targetArea)
             {
+                if (currentRow.Count == 0)
+                {
+                    // Если текущий ряд пуст, переключаемся на другой
+                    currentRow = currentRow == topModules ? bottomModules : topModules;
+
+                    // Если другой ряд тоже пуст, завершаем цикл
+                    if (currentRow.Count == 0)
+                        break;
+                }
+
                 var modulesToCombine = new List<Polygon>();
                 var combinedArea = 0.0;
+                var apartmentCreated = false;
 
-                // Выбираем, откуда брать модули (сверху или снизу)
-                var moduleRow = topModules.Count != 0 ? topModules : bottomModules;
-
-                foreach (var module in moduleRow.ToList())
+                for (var i = 0; i < currentRow.Count; i++)
                 {
-                    if (combinedArea + module.Area > apartmentType.MaxArea)
-                        break;
-
+                    var module = currentRow[i];
+                    
+                    if (modulesToCombine.Count != 0)
+                    {
+                        var lastModule = modulesToCombine.Last();
+                        if (!ModulesAreAdjacent(lastModule, module))
+                        {
+                            modulesToCombine.Clear();
+                            combinedArea = 0.0;
+                            continue;
+                        }
+                    }
                     modulesToCombine.Add(module);
                     combinedArea += module.Area;
-                    moduleRow.Remove(module);
 
-                    // Проверка, можно ли завершить текущую квартиру
+                    // Если квартира сформирована в пределах площади
                     if (combinedArea >= apartmentType.MinArea && combinedArea <= apartmentType.MaxArea)
                     {
                         var apartmentPolygon = GeometryHelper.CombinePolygons(modulesToCombine);
                         apartments.Add(new Apartment(floor, apartmentPolygon, apartmentType.Name));
                         currentArea += combinedArea;
+                        modulesToCombine.ForEach(m => currentRow.Remove(m));
+
+                        apartmentCreated = true;
                         break;
                     }
                 }
 
-                // Если не удалось создать квартиру, выбрасываем исключение
-                if (combinedArea < apartmentType.MinArea)
+                // Если не удалось создать квартиру
+                if (!apartmentCreated)
                 {
-                    throw new InvalidOperationException(
-                        $"Не удалось создать квартиру типа {apartmentType.Name} в заданных пределах площади.");
+                    // Переходим на другой ряд, если невозможно продолжить в текущем
+                    if (currentRow == topModules && bottomModules.Count >= apartmentType.Rooms)
+                    {
+                        currentRow = bottomModules;
+                        continue;
+                    }
+
+                    break;
                 }
             }
         }
 
         return apartments;
+    }
+    
+    private static bool ModulesAreAdjacent(Polygon module1, Polygon module2)
+    {
+        var envelope1 = module1.EnvelopeInternal;
+        var envelope2 = module2.EnvelopeInternal;
+
+        // Проверяем, что модули соприкасаются по горизонтали и находятся на 1 вертикали
+        return Math.Abs(envelope1.MaxX - envelope2.MinX) < 0.01 || Math.Abs(envelope1.MinX - envelope2.MaxX) < 0.01 &&
+            Math.Abs(envelope1.MaxY - envelope2.MaxY) < 0.01;
     }
 }

@@ -106,16 +106,6 @@ public class FloorApprovalTests
             }
         ];
         
-        //Широкое здание с большим диапазоном
-        yield return
-        [
-            50.0, 40.0, 
-            new List<ApartmentType>
-            {
-                new("Комфорт", rooms: 2, minArea: 60, maxArea: 120, percentage: 100)
-            }
-        ];
-        
         //Минимальная ширина модуля, здание с коридором и одним типом квартир
         yield return
         [
@@ -127,16 +117,51 @@ public class FloorApprovalTests
         ];
         
         //Простейший случай с двумя типами квартир
-        
-        yield return new object[]
-        {
+        yield return
+        [
             20.0, 10.0, 
             new List<ApartmentType>
             {
                 new("Люкс", rooms: 3, minArea: 60, maxArea: 80, percentage: 50),
                 new("Эконом", rooms: 1, minArea: 20, maxArea: 40, percentage: 50)
             }
+        ];
+        
+        
+        //Большое здание с разнообразием квартир
+        yield return new object[]
+        {
+            200.0, 100.0, 
+            new List<ApartmentType>
+            {
+                new("Эконом", rooms: 1, minArea: 50, maxArea: 80, percentage: 30),
+                new("Комфорт", rooms: 2, minArea: 90, maxArea: 120, percentage: 50),
+                new("Люкс", rooms: 3, minArea: 150, maxArea: 200, percentage: 20)
+            }
         };
+        
+        //Широкое и невысокое здание с большими квартирами
+        yield return new object[]
+        {
+            150.0, 50.0,
+            new List<ApartmentType>
+            {
+                new("Люкс", rooms: 3, minArea: 120, maxArea: 180, percentage: 60),
+                new("Комфорт", rooms: 2, minArea: 80, maxArea: 100, percentage: 40)
+            }
+        };
+        
+        //Узкое и длинное здание с маленькими квартирами
+        yield return new object[]
+        {
+            30.0, 100.0, 
+            new List<ApartmentType>
+            {
+                new("Эконом", rooms: 1, minArea: 25, maxArea: 40, percentage: 100) 
+            }
+        };
+
+
 
     }
 

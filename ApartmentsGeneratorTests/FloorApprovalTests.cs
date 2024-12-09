@@ -95,6 +95,49 @@ public class FloorApprovalTests
                 new("Эконом", rooms: 1, minArea: 113, maxArea: 200, percentage: 50),
             }
         ];
+        
+        //Минимальная ширина здания
+        yield return
+        [
+            50.0, 30.0, 
+            new List<ApartmentType>
+            {
+                new("Эконом", rooms: 1, minArea: 30, maxArea: 50, percentage: 100)
+            }
+        ];
+        
+        //Широкое здание с большим диапазоном
+        yield return
+        [
+            50.0, 40.0, 
+            new List<ApartmentType>
+            {
+                new("Комфорт", rooms: 2, minArea: 60, maxArea: 120, percentage: 100)
+            }
+        ];
+        
+        //Минимальная ширина модуля, здание с коридором и одним типом квартир
+        yield return
+        [
+            20.0, 30.0, 
+            new List<ApartmentType>
+            {
+                new("Эконом", rooms: 1, minArea: 25, maxArea: 50, percentage: 100)
+            }
+        ];
+        
+        //Простейший случай с двумя типами квартир
+        
+        yield return new object[]
+        {
+            20.0, 10.0, 
+            new List<ApartmentType>
+            {
+                new("Люкс", rooms: 3, minArea: 60, maxArea: 80, percentage: 50),
+                new("Эконом", rooms: 1, minArea: 20, maxArea: 40, percentage: 50)
+            }
+        };
+
     }
 
     private static Floor GenerateFloor(double buildingWidthMeters, double buildingHeightMeters,

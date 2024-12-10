@@ -1,8 +1,13 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ApartmentsGenerator.Core", "ApartmentsGenerator.Core\ApartmentsGenerator.Core.csproj", "{04327470-3C17-4110-B3B6-98B359B395AE}"
+# Visual Studio Version 17
+VisualStudioVersion = 17.11.35327.3
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ApartmentsGenerator.Core", "ApartmentsGenerator.Core\ApartmentsGenerator.Core.csproj", "{04327470-3C17-4110-B3B6-98B359B395AE}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ApartmentsGeneratorTests", "ApartmentsGeneratorTests\ApartmentsGeneratorTests.csproj", "{B7B936EE-7081-4620-816D-E81D1625271E}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ApartmentsGeneratorTests", "ApartmentsGeneratorTests\ApartmentsGeneratorTests.csproj", "{B7B936EE-7081-4620-816D-E81D1625271E}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ApartmentsGenerator.Revit", "ApartmentsGenerator.Revit\ApartmentsGenerator.Revit.csproj", "{023A67EC-33CE-431C-BBF2-9A67BE68668F}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -18,5 +23,15 @@ Global
 		{B7B936EE-7081-4620-816D-E81D1625271E}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{B7B936EE-7081-4620-816D-E81D1625271E}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{B7B936EE-7081-4620-816D-E81D1625271E}.Release|Any CPU.Build.0 = Release|Any CPU
+		{023A67EC-33CE-431C-BBF2-9A67BE68668F}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{023A67EC-33CE-431C-BBF2-9A67BE68668F}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{023A67EC-33CE-431C-BBF2-9A67BE68668F}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{023A67EC-33CE-431C-BBF2-9A67BE68668F}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {A8081711-6131-4967-86A9-44F81627381C}
 	EndGlobalSection
 EndGlobal

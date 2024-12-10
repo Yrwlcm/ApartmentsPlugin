@@ -43,11 +43,11 @@
     <Reference Include="PresentationCore" />
     <Reference Include="PresentationFramework" />
     <Reference Include="RevitAPI">
-      <HintPath>D:\Apps\Autodesk\Revit 2022\RevitAPI.dll</HintPath>
+      <HintPath>D:\Apps\Autodesk\Revit\Revit 2022\RevitAPI.dll</HintPath>
       <Private>False</Private>
     </Reference>
     <Reference Include="RevitAPIUI">
-      <HintPath>D:\Apps\Autodesk\Revit 2022\RevitAPIUI.dll</HintPath>
+      <HintPath>D:\Apps\Autodesk\Revit\Revit 2022\RevitAPIUI.dll</HintPath>
       <Private>False</Private>
     </Reference>
     <Reference Include="System" />
@@ -62,17 +62,16 @@
     <Reference Include="WindowsBase" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="ParametersWindow.xaml.cs">
-      <DependentUpon>ParametersWindow.xaml</DependentUpon>
-    </Compile>
+    <Compile Include="App.xaml.cs" />
     <Compile Include="Startup.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Page Include="View\MainWindow.xaml.cs" />
   </ItemGroup>
   <ItemGroup>
-    <Page Include="ParametersWindow.xaml">
-      <SubType>Designer</SubType>
-      <Generator>MSBuild:Compile</Generator>
-    </Page>
+    <Page Include="View\MainWindow.xaml" />
+    <Page Include="View\Styles\ButtonStyle.xaml" />
+    <Page Include="View\Styles\TextBlockStyle.xaml" />
+    <Page Include="View\Styles\TextBoxStyle.xaml" />
   </ItemGroup>
   <ItemGroup>
     <None Include="apartmentsGenerator.addin">
